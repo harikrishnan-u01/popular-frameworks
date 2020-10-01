@@ -1,0 +1,13 @@
+.App {
+  text-align: center;
+}
+
+button {
+  border: none;
+  background-color: white;
+}
+
+button:active {
+  border: none;
+  background-color: white;
+}
