@@ -1,23 +1,45 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
 import axios from 'axios';
-import {Grid,Card,CardContent,Typography, Paper , Tab, Tabs, Button} from '@material-ui/core';
+import {Grid,Card,CardContent,Typography, Paper , Tab, Tabs} from '@material-ui/core';
+import Pagination from '@material-ui/lab/Pagination';
 
 function App() {
+
+  const initPageParams = {
+    pageNumber : 1,
+    startIndex : 0,
+    endIndex : 9
+  };
 
   useEffect(()=> {
     axios.get("https://api.github.com/search/repositories?q=stars:%3E10000&sort=stars")
     .then((success)=>{
       console.log("success", success);
-      // const sortedItems = success.data.items.sort((a, b)=> {
-      //   return b.stargazers_count - a.stargazers_count;
-      // });
       setFrameworks(success.data.items);
     });
   }, []);
 
   const [frameworks, setFrameworks] = useState([]);
   const [filter, setFilter] = useState("All");
+  const [paginationParams, setPaginationParams] = useState(initPageParams);
+  const [pageCount, setPageCount] = useState(1);
+  const numberOfItems = 10;
+
+  const onPaginationChange = (event, pageNumber) => {
+    console.log("Selected Page Number ===> ", pageNumber);
+    let addNumber = (pageNumber - paginationParams.pageNumber) * numberOfItems ;
+    setPaginationParams({
+      pageNumber,
+      startIndex : paginationParams.startIndex + addNumber,
+      endIndex : paginationParams.endIndex + addNumber
+    });
+  };
+
+  const onFilter = (language) => {
+    setPaginationParams(initPageParams);
+    setFilter(language);
+  }
 
   return (
     <div className="App">
@@ -36,36 +58,48 @@ function App() {
 
       <Grid container spacing={3} alignItems='center'>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("All")}>All</button>
+          <button onClick={()=> onFilter("All")}>All</button>
         </Grid>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("JavaScript")}>JavaScript </button>
+          <button onClick={()=> onFilter("JavaScript")}>JavaScript </button>
         </Grid>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("Ruby")}>Ruby </button>
+          <button onClick={()=> onFilter("Ruby")}>Ruby </button>
         </Grid>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("Java")}>Java </button>
+          <button onClick={()=> onFilter("Java")}>Java </button>
         </Grid>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("CSS")}>CSS </button>
+          <button onClick={()=> onFilter("CSS")}>CSS </button>
         </Grid>
         <Grid item xs={2}>
-          <button onClick={()=> setFilter("Python")}>Python </button>
+          <button onClick={()=> onFilter("Python")}>Python </button>
         </Grid>
       </Grid>
 
+      {
+        frameworks.length === 0 ? <Grid container spacing={3} justify="center">
+                <Card variant="outlined">              
+                  <CardContent>                  
+                    <Typography variant="h6">
+                    Loading....
+                    </Typography>
+                  </CardContent>
+                </Card>
+          </Grid> : null
+      }
+      
       <Grid container spacing={3}>
         {
           frameworks.filter((item)=> {
             console.log("Filter ", filter);
             return filter==='All' || item.language === filter ;
           }).map((item, index)=> {
-            return <Grid item xs={6} md={3} lg={2} key={index}>
+            return paginationParams && index >= paginationParams.startIndex && index <= paginationParams.endIndex ? <Grid item xs={6} md={3} lg={2} key={index}>
               <Card variant="outlined">              
                 <CardContent>                  
                   <Typography variant="h6">
-                    #{index}
+                    #{index + 1}
                   </Typography>
                   <img src={item.owner.avatar_url} width="100" height="100" style={{borderRadius: '3em'}} alt="This is avatar"></img>
                   <Typography variant="h6">
@@ -78,10 +112,19 @@ function App() {
                   </Typography> 
                 </CardContent>
               </Card>
-            </Grid>
+            </Grid> : null
           })
         }        
       </Grid>
+      {
+        frameworks.length > 0 ? <Grid container spacing={3} justify="center">
+            <Pagination count={10} color="primary" 
+              onChange={onPaginationChange} count={frameworks.length > 0 ? Math.round(frameworks.length/numberOfItems)  : 0} 
+              page={paginationParams.pageNumber} 
+            />
+          </Grid> : null
+      }
+      
     </div>
   );
 }

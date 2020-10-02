@@ -10,4 +10,5 @@ button {
 button:active {
   border: none;
   background-color: white;
+  outline: none;
 }
