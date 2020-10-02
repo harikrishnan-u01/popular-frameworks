@@ -1,8 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
 import axios from 'axios';
-import {Grid,Card,CardContent,Typography, Paper , Tab, Tabs} from '@material-ui/core';
+import {Grid,Card,CardContent,Typography} from '@material-ui/core';
 import Pagination from '@material-ui/lab/Pagination';
+import Filters from './filters';
+import Navigation from './navigation';
+import LoadingCard from './loadingCard'; 
 
 function App() {
 
@@ -17,13 +20,14 @@ function App() {
     .then((success)=>{
       console.log("success", success);
       setFrameworks(success.data.items);
+      setFilteredFrameworks(success.data.items);
     });
   }, []);
 
   const [frameworks, setFrameworks] = useState([]);
-  const [filter, setFilter] = useState("All");
+  const [filteredFrameworks, setFilteredFrameworks] = useState(frameworks);
+ // const [filter, setFilter] = useState("All");
   const [paginationParams, setPaginationParams] = useState(initPageParams);
-  const [pageCount, setPageCount] = useState(1);
   const numberOfItems = 10;
 
   const onPaginationChange = (event, pageNumber) => {
@@ -38,64 +42,27 @@ function App() {
 
   const onFilter = (language) => {
     setPaginationParams(initPageParams);
-    setFilter(language);
+   // setFilter(language);
+
+   setFilteredFrameworks(frameworks.filter((item)=> {
+      return language==='All' || item.language === language ;
+    }));
   }
 
   return (
     <div className="App">
-
-      <Paper square>
-        <Tabs
-          indicatorColor="primary"
-          textColor="primary"
-          value="2"
-        >
-          <Tab label="Home" value="0" />
-          <Tab label="Battle" value="1" />
-          <Tab label="Popular" value="2" />
-        </Tabs>
-      </Paper>
-
-      <Grid container spacing={3} alignItems='center'>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("All")}>All</button>
-        </Grid>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("JavaScript")}>JavaScript </button>
-        </Grid>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("Ruby")}>Ruby </button>
-        </Grid>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("Java")}>Java </button>
-        </Grid>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("CSS")}>CSS </button>
-        </Grid>
-        <Grid item xs={2}>
-          <button onClick={()=> onFilter("Python")}>Python </button>
-        </Grid>
-      </Grid>
-
+      <Navigation />
+      <Filters onFilter={onFilter}></Filters>
       {
-        frameworks.length === 0 ? <Grid container spacing={3} justify="center">
-                <Card variant="outlined">              
-                  <CardContent>                  
-                    <Typography variant="h6">
-                    Loading....
-                    </Typography>
-                  </CardContent>
-                </Card>
-          </Grid> : null
+        frameworks.length === 0 ? <LoadingCard message="Loading....."/> : null
       }
       
-      <Grid container spacing={3}>
+      <Grid container spacing={3} style={{minHeight: '60vh'}}>
         {
-          frameworks.filter((item)=> {
-            console.log("Filter ", filter);
-            return filter==='All' || item.language === filter ;
-          }).map((item, index)=> {
-            return paginationParams && index >= paginationParams.startIndex && index <= paginationParams.endIndex ? <Grid item xs={6} md={3} lg={2} key={index}>
+          filteredFrameworks
+          .map((item, index)=> {
+            return paginationParams && index >= paginationParams.startIndex && index <= paginationParams.endIndex ? 
+            <Grid item xs={6} md={3} lg={2} key={index}>
               <Card variant="outlined">              
                 <CardContent>                  
                   <Typography variant="h6">
@@ -117,9 +84,9 @@ function App() {
         }        
       </Grid>
       {
-        frameworks.length > 0 ? <Grid container spacing={3} justify="center">
+        filteredFrameworks.length > 0 ? <Grid container spacing={3} justify="center">
             <Pagination count={10} color="primary" 
-              onChange={onPaginationChange} count={frameworks.length > 0 ? Math.round(frameworks.length/numberOfItems)  : 0} 
+              onChange={onPaginationChange} count={filteredFrameworks.length > 0 ? Math.ceil(filteredFrameworks.length/numberOfItems)  : 0} 
               page={paginationParams.pageNumber} 
             />
           </Grid> : null
